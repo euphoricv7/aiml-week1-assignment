@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Based Plant Disease Detection[Group 3]</title>
+    <meta name="description" content="AI-Based Plant Leaf Disease Detection web application, developed by Group 3 AI Interns. Upload or capture photos of crops to detect disease and receive remedies.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="glass-bg-blur"></div>
+    <div class="glass-bg-glow1"></div>
+    <div class="glass-bg-glow2"></div>
+
+    <div class="container">
+        <!-- Top Navigation / Header -->
+        <header class="app-header" id="appHeader">
+            <div class="header-logo">
+                <i class="fa-solid fa-leaf leaf-logo-icon"></i>
+                <div>
+                    <h1 class="logo-title">AgriShield AI</h1>
+                    <span class="logo-subtitle">Plant Disease Classifier</span>
+                </div>
+            </div>
+            <div class="header-badge">
+                <span class="badge-text">Minor Project </span>
+                <span class="group-tag">Group 3 — AI Intern</span>
+            </div>
+        </header>
+
+        <!-- Main Workspace Tab -->
+         <div class="tabs-container">
+            <button class="tab-btn active">
+                <i class="fa-solid fa-qrcode tab-icon"></i>
+                Interactive Demo
+            </button>
+        </div>
+                
+        <!-- TAB CONTENT: DEMO -->
+        <main class="tab-content active" id="demo-tab">
+            <div class="dashboard-grid">
+                <!-- Left Panel: Upload & Capture Controls -->
+                <section class="card control-panel" id="controlPanel">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-sliders"></i> Diagnostic Input</h2>
+                        <p>Upload a leaf image or use the camera to perform a CNN-based disease scan.</p>
+                    </div>
+
+                    <!-- Input Modes Selector -->
+                    <div class="input-modes">
+                        <button class="mode-btn active" id="modeUploadBtn" onclick="setInputMode('upload')">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Upload File
+                        </button>
+                        <button class="mode-btn" id="modeCameraBtn" onclick="setInputMode('camera')">
+                            <i class="fa-solid fa-camera"></i> Live Camera
+                        </button>
+                    </div>
+
+                    <!-- Mode 1: File Upload Box -->
+                    <div class="mode-box active" id="uploadBox">
+                        <div class="drop-zone" id="dropZone">
+                            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                            <div class="drop-zone-content">
+                                <i class="fa-solid fa-image-portrait drop-icon"></i>
+                                <p class="drop-title">Drag & drop leaf photo here</p>
+                                <span class="drop-or">or</span>
+                                <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+                                    Browse Files
+                                </button>
+                                <span class="drop-info">Supports JPEG, PNG, WEBP (Min 128x128)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mode 2: Webcam Capture Box -->
+                    <div class="mode-box" id="cameraBox">
+                        <div class="camera-stream-wrapper">
+                            <video id="webcamVideo" autoplay playsinline class="webcam-video"></video>
+                            <canvas id="webcamCanvas" style="display:none;"></canvas>
+                            <div class="camera-placeholder" id="cameraPlaceholder">
+                                <i class="fa-solid fa-video-slash placeholder-icon"></i>
+                                <p>Camera is currently inactive</p>
+                                <button class="btn btn-primary" id="startCamBtn" onclick="initWebcam()">
+                                    <i class="fa-solid fa-play"></i> Initialize Camera
+                                </button>
+                            </div>
+                        </div>
+                        <div class="camera-controls" id="cameraControls" style="display:none;">
+                            <button class="btn btn-secondary" id="captureBtn" onclick="capturePhoto()">
+                                <i class="fa-solid fa-circle-dot"></i> Capture Leaf
+                            </button>
+                            <button class="btn btn-danger-outline" id="stopCamBtn" onclick="stopWebcam()">
+                                <i class="fa-solid fa-stop"></i> Turn Off
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Image Preview Area -->
+                    <div class="preview-container" id="previewContainer" style="display:none;">
+                        <h3>Image Ready for Scan</h3>
+                        <div class="preview-frame">
+                            <img id="imagePreview" src="" alt="Selected Plant Leaf Preview">
+                            <button class="remove-preview-btn" onclick="clearPreview()" title="Clear Preview">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <button class="btn btn-primary btn-block btn-pulse" id="scanBtn" onclick="runInference()">
+                            <i class="fa-solid fa-microscope"></i> Analyze Leaf Health
+                        </button>
+                    </div>
+
+                   
+                    
+                </section>
+
+                <!-- Right Panel: Results & Remedies -->
+                <section class="card results-panel" id="resultsPanel">
+                    <!-- Default State (No prediction yet) -->
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-animation">
+                            <i class="fa-solid fa-spinner fa-spin loading-icon" style="display: none;" id="loaderSpinner"></i>
+                            <i class="fa-solid fa-seedling seedling-icon" id="loaderSeedling"></i>
+                        </div>
+                        <h2 id="emptyTitle">Awaiting Leaf Diagnostics</h2>
+                        <p id="emptyText">Upload/capture a photo on the left. The classifier will identify the crop, disease strain, and suggest remedy protocols.</p>
+                    </div>
+
+                    <!-- Analysis State (Visible when results arrive) -->
+                    <div class="results-content" id="resultsContent" style="display:none;">
+                        <div class="results-header-summary">
+                            <div class="health-indicator-ring" id="healthIndicator">
+                                <div class="ring-value" id="predictionConfidence">92%</div>
+                                <svg class="ring-svg" viewBox="0 0 100 100">
+                                    <circle class="ring-track" cx="50" cy="50" r="42"></circle>
+                                    <circle class="ring-fill" id="ringFillProgress" cx="50" cy="50" r="42"></circle>
+                                </svg>
+                            </div>
+                            <div class="prediction-info">
+                                <span class="badge" id="healthStatusBadge">Infected</span>
+                                <h2 class="disease-name" id="predictionName">Tomato - Early Blight</h2>
+                                <p class="prediction-meta">Classification Confidence Score: <strong id="predictionPercentageText">92.4%</strong></p>
+                            </div>
+                        </div>
+
+
+                        <!-- Remedy & Treatment Tabs -->
+                        <div class="remedies-section">
+                            <h3><i class="fa-solid fa-kit-medical"></i> Treatment & Remedies</h3>
+                            
+                            <div class="remedy-accordion">
+                                <!-- Box 1: Diagnosis & Cause -->
+                                <div class="accordion-item open" id="accItemDiagnosis">
+                                    <div class="accordion-trigger" onclick="toggleAccordion('accItemDiagnosis')">
+                                        <span><i class="fa-solid fa-magnifying-glass-chart"></i> Diagnosis & Pathogen Cause</span>
+                                        <i class="fa-solid fa-chevron-down acc-chevron"></i>
+                                    </div>
+                                    <div class="accordion-content">
+                                        <p id="remedyDiagnosis">Loading...</p>
+                                        <div class="cause-block">
+                                            <strong>Primary Cause:</strong>
+                                            <span id="remedyCause">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Box 2: Prevention -->
+                                <div class="accordion-item" id="accItemPrevention">
+                                    <div class="accordion-trigger" onclick="toggleAccordion('accItemPrevention')">
+                                        <span><i class="fa-solid fa-shield-halved"></i> Preventive Farm Practices</span>
+                                        <i class="fa-solid fa-chevron-down acc-chevron"></i>
+                                    </div>
+                                    <div class="accordion-content">
+                                        <ul class="remedy-list" id="remedyPreventionList">
+                                            <!-- List items inserted dynamically -->
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Box 3: Organic Treatment -->
+                                <div class="accordion-item" id="accItemOrganic">
+                                    <div class="accordion-trigger" onclick="toggleAccordion('accItemOrganic')">
+                                        <span><i class="fa-solid fa-hands-holding-child"></i> Organic / Biological Treatment</span>
+                                        <i class="fa-solid fa-chevron-down acc-chevron"></i>
+                                    </div>
+                                    <div class="accordion-content">
+                                        <ul class="remedy-list" id="remedyOrganicList">
+                                            <!-- List items inserted dynamically -->
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Box 4: Chemical Remedy -->
+                                <div class="accordion-item" id="accItemChemical">
+                                    <div class="accordion-trigger" onclick="toggleAccordion('accItemChemical')">
+                                        <span><i class="fa-solid fa-flask-vial"></i> Chemical Fungicides Control</span>
+                                        <i class="fa-solid fa-chevron-down acc-chevron"></i>
+                                    </div>
+                                    <div class="accordion-content">
+                                        <ul class="remedy-list" id="remedyChemicalList">
+                                            <!-- List items inserted dynamically -->
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+        
+        <!-- App Footer -->
+        <footer class="app-footer">
+            <p>&copy; 2026 AgriShield AI. Created by Group 3 as AI Intern Project. Version 1.0.0</p>
+        </footer>
+    </div>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
