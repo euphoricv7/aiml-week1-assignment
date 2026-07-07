@@ -12,9 +12,10 @@ This repository contains all weekly project submissions for the WeIntern AI Inte
 
 ```
 weintern-ai-internship/
-├── Week-1-Data-Analysis/        # Student performance data analysis and visualization
-├── Week-2-AI-Applications/      # AI application development
-└── README.md 
+├── Week-1-Data-Analysis/                        # Student performance data analysis and visualization
+├── Week-2-AI-Applications/                      # AI application development
+├── Minor-Project-Plant-Disease-Detection/       # CNN-based plant disease detection web app
+└── README.md
 ```
 
 ---
@@ -46,6 +47,24 @@ Three AI-powered applications built with Python, NLP, and Google Gemini.
 | Task 3 | AI Content Generator | Multi-tone content generator with 9 content types |
 
 [View Week 2 →](Week-2-AI-Applications/)
+
+---
+
+## Minor Project — AI-Based Plant Disease Detection
+
+CNN-based web application for real-time plant leaf disease classification and treatment recommendations.
+
+| Detail | Description |
+|---|---|
+| Model | MobileNetV2 (Transfer Learning) |
+| Classes | 38 disease categories across 14 crops |
+| Frontend | Flask + HTML/CSS/JS |
+| Deployment | Hugging Face Spaces (Docker) |
+| Live Demo | [agrishield-ai on Hugging Face](https://huggingface.co/spaces/Vratika7/agrishield-ai) |
+
+**Tech stack:** TensorFlow, Flask, Pillow, NumPy, Docker, Hugging Face
+
+[View Minor Project →](Minor-Project-Plant-Disease-Detection/)
 
 ---
 
